@@ -19,6 +19,7 @@ The first milestone includes:
 - Policy decisions with RBAC and human approval gates
 - Tool registry with permission metadata
 - Vendor-neutral model routing policy
+- Hermes-inspired provider transports, fallback routing, retries, and circuits
 - SQLite schema for runtime, memory, approvals, and audit data
 - Versioned HTTP, event, and agent manifest contracts
 - Hardened systemd and D-Bus integration definitions
@@ -58,6 +59,8 @@ and includes the standalone Debian package under `/agentos`.
 
 The server stores state under `./var` by default. Override settings with
 environment variables documented in [`config/agentos.env`](config/agentos.env).
+Gateway defaults live in [`config/config.json`](config/config.json), and custom
+provider profiles use [`config/providers.json`](config/providers.json).
 
 ## Design principles
 

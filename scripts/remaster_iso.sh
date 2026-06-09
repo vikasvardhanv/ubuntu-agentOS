@@ -6,7 +6,8 @@ source_iso="${1:-$root/ubuntu-26.04-desktop-arm64.iso}"
 output_iso="${2:-$root/dist/agentos-26.04-desktop-arm64.iso}"
 tree="$root/build/iso-tree"
 overlay="$root/build/iso-overlay"
-package="$root/dist/agentos-runtime_0.1.0_all.deb"
+version="${AGENTOS_VERSION:-0.2.0}"
+package="$root/dist/agentos-runtime_${version}_all.deb"
 
 [ -f "$source_iso" ] || { echo "source ISO not found: $source_iso" >&2; exit 1; }
 [ -f "$package" ] || "$root/scripts/build_deb.sh"
@@ -30,7 +31,7 @@ ln -s /lib/systemd/system/agentos-runtime.service \
 ln -s /lib/systemd/system/agentos-firstboot.service \
   "$overlay/etc/systemd/system/graphical.target.wants/agentos-firstboot.service"
 mksquashfs "$overlay" "$tree/casper/minimal.agentos.squashfs" \
-  -quiet -no-recovery -no-xattrs -all-root
+  -quiet -no-recovery -no-xattrs -all-root -noappend
 cp "$tree/casper/minimal.agentos.squashfs" \
   "$tree/casper/minimal.standard.agentos.squashfs"
 overlay_size="$(du -sk "$overlay" | awk '{print $1 * 1024}')"
@@ -38,13 +39,13 @@ printf '%s\n' "$overlay_size" > "$tree/casper/minimal.agentos.size"
 printf '%s\n' "$overlay_size" > "$tree/casper/minimal.standard.agentos.size"
 cp "$tree/casper/minimal.manifest" "$tree/casper/minimal.agentos.manifest"
 cp "$tree/casper/minimal.standard.manifest" "$tree/casper/minimal.standard.agentos.manifest"
-printf 'agentos-runtime\t0.1.0\n' >> "$tree/casper/minimal.agentos.manifest"
-printf 'agentos-runtime\t0.1.0\n' >> "$tree/casper/minimal.standard.agentos.manifest"
+printf 'agentos-runtime\t%s\n' "$version" >> "$tree/casper/minimal.agentos.manifest"
+printf 'agentos-runtime\t%s\n' "$version" >> "$tree/casper/minimal.standard.agentos.manifest"
 cp "$tree/casper/minimal.manifest.full" "$tree/casper/minimal.agentos.manifest.full"
 cp "$tree/casper/minimal.standard.manifest.full" \
   "$tree/casper/minimal.standard.agentos.manifest.full"
-printf 'agentos-runtime\t0.1.0\n' >> "$tree/casper/minimal.agentos.manifest.full"
-printf 'agentos-runtime\t0.1.0\n' >> "$tree/casper/minimal.standard.agentos.manifest.full"
+printf 'agentos-runtime\t%s\n' "$version" >> "$tree/casper/minimal.agentos.manifest.full"
+printf 'agentos-runtime\t%s\n' "$version" >> "$tree/casper/minimal.standard.agentos.manifest.full"
 perl -pi -e 's/path: minimal\.squashfs/path: minimal.agentos.squashfs/' \
   "$tree/casper/install-sources.yaml"
 perl -pi -e 's/path: minimal\.standard\.squashfs/path: minimal.standard.agentos.squashfs/' \

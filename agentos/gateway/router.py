@@ -4,7 +4,8 @@ import os
 from dataclasses import dataclass
 from typing import Iterable
 
-from agentos.gateway.providers import Provider, resolve_provider
+from agentos.gateway.health import CircuitBreaker
+from agentos.gateway.providers import Provider, ProviderRegistry
 
 
 @dataclass(frozen=True)
@@ -24,8 +25,15 @@ class RoutePolicy:
 class Router:
     """Hermes-style provider:model resolution with constrained fallbacks."""
 
-    def __init__(self, fallback_routes: Iterable[str] = ()):
+    def __init__(
+        self,
+        fallback_routes: Iterable[str] = (),
+        registry: ProviderRegistry | None = None,
+        circuits: CircuitBreaker | None = None,
+    ):
         self.fallback_routes = tuple(fallback_routes)
+        self.registry = registry or ProviderRegistry()
+        self.circuits = circuits or CircuitBreaker()
 
     def candidates(self, requested: str, policy: RoutePolicy) -> list[Route]:
         requested_routes = (requested, *self.fallback_routes)
@@ -42,17 +50,15 @@ class Router:
             raise ValueError("no provider satisfies routing policy")
         return routes
 
-    @staticmethod
-    def _parse(value: str) -> Route:
+    def _parse(self, value: str) -> Route:
         if ":" not in value:
             raise ValueError("model route must use provider:model")
         provider_name, model = value.split(":", 1)
         if not provider_name or not model:
             raise ValueError("model route must use provider:model")
-        return Route(resolve_provider(provider_name), model)
+        return Route(self.registry.resolve(provider_name), model)
 
-    @staticmethod
-    def _eligible(provider: Provider, policy: RoutePolicy) -> bool:
+    def _eligible(self, provider: Provider, policy: RoutePolicy) -> bool:
         if policy.providers and provider.id not in policy.providers:
             return False
         if policy.local_only and not provider.local:
@@ -60,5 +66,7 @@ class Router:
         if not policy.require.issubset(provider.capabilities):
             return False
         if provider.secret_env and not os.getenv(provider.secret_env):
+            return False
+        if not self.circuits.available(provider.id):
             return False
         return True

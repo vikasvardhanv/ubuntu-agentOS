@@ -1,6 +1,8 @@
 [Unit]
 Description=AgentOS control plane and LLM gateway
 After=network.target
+StartLimitIntervalSec=60s
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -11,6 +13,7 @@ ExecStart=/usr/bin/python3 -m cmd.agentosd
 WorkingDirectory=/usr/lib/agentos
 Restart=on-failure
 RestartSec=5s
+TimeoutStopSec=30s
 NoNewPrivileges=yes
 PrivateTmp=yes
 PrivateDevices=yes
@@ -21,10 +24,14 @@ ProtectKernelModules=yes
 ProtectControlGroups=yes
 RestrictNamespaces=yes
 RestrictRealtime=yes
+RestrictSUIDSGID=yes
 LockPersonality=yes
 MemoryDenyWriteExecute=yes
 CapabilityBoundingSet=
 AmbientCapabilities=
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
 ReadWritePaths=/var/lib/agentos
 UMask=0077
 

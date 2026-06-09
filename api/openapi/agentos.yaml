@@ -9,6 +9,7 @@ paths:
   /v1/health:
     get:
       operationId: health
+      description: Gateway readiness, configured providers, and circuit state.
       responses:
         "200":
           description: Healthy
@@ -69,6 +70,10 @@ paths:
                     require: {type: array, items: {type: string}}
                     local_only: {type: boolean}
                     data_collection: {enum: [allow, deny]}
+                    upstream_only: {type: array, items: {type: string}}
+                    upstream_ignore: {type: array, items: {type: string}}
+                    sort: {enum: [price, latency, throughput]}
+                    require_parameters: {type: boolean}
       responses:
         "200":
           description: Normalized completion

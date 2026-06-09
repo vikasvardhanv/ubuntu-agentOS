@@ -8,6 +8,8 @@
 - Every action, decision, approval, invocation, and result is audited.
 - Secrets are referenced, never exposed to models or stored in task payloads.
 - Remote content, tool output, and model output are untrusted data.
+- Provider credentials exist only in the gateway service environment and are
+  never included in API responses or audit records.
 
 ## Authorization
 
@@ -33,6 +35,11 @@ temporary directories, syscall filters, capability bounding, resource limits,
 and network restrictions. Higher-risk workloads use containers or microVMs.
 Filesystem tools resolve symlinks and verify the final canonical path remains
 inside a granted root.
+
+The development gateway binds to loopback. Operators should set
+`AGENTOS_API_TOKEN` through a protected systemd credential for Bearer
+authentication. A production desktop build must replace header-supplied actor
+roles with Unix-socket peer credentials and signed session claims.
 
 ## Audit
 

@@ -23,6 +23,20 @@ cat > "$CONFIG_DIR/config.json" <<EOF
 {"default_route":"$route","memory_mode":"$memory","approval_policy":"$approval"}
 EOF
 
+sudo python3 - "$route" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path("/etc/agentos/config.json")
+data = json.loads(path.read_text()) if path.exists() else {}
+gateway = data.setdefault("gateway", {})
+gateway["fallbacks"] = [sys.argv[1]]
+path.write_text(json.dumps(data, indent=2) + "\n")
+path.chmod(0o640)
+PY
+sudo systemctl restart agentos-runtime.service
+
 printf '\nProvider API keys are intentionally not requested in this terminal.\n'
 printf 'Store them through the system secret service before enabling remote routes.\n'
 printf 'AgentOS setup complete. The runtime is available on the local gateway.\n'

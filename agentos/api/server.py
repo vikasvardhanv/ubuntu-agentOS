@@ -13,7 +13,9 @@ class ApiHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         if self.path == "/v1/health":
-            self._reply(HTTPStatus.OK, {"status": "ok"})
+            self._reply(HTTPStatus.OK, self.server.gateway.health())
+        elif not self._authenticated():
+            self._reply(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
         elif self.path == "/v1/agents":
             self._invoke(lambda: self.server.runtime.list_agents(self._actor()))
         elif self.path == "/v1/tools":
@@ -22,7 +24,9 @@ class ApiHandler(BaseHTTPRequestHandler):
             self._reply(HTTPStatus.NOT_FOUND, {"error": "not_found"})
 
     def do_POST(self) -> None:
-        if self.path == "/v1/agents":
+        if not self._authenticated():
+            self._reply(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
+        elif self.path == "/v1/agents":
             body = self._body()
             self._invoke(
                 lambda: self.server.runtime.register(
@@ -40,10 +44,15 @@ class ApiHandler(BaseHTTPRequestHandler):
         actor_id = self.headers.get("x-agentos-actor", "local-user")
         roles = tuple(
             role.strip()
-            for role in self.headers.get("x-agentos-roles", "administrator").split(",")
+            for role in self.headers.get("x-agentos-roles", "operator").split(",")
             if role.strip()
         )
         return Actor(actor_id, roles=roles)
+
+    def _authenticated(self) -> bool:
+        if not self.server.api_token:
+            return True
+        return self.headers.get("authorization", "") == f"Bearer {self.server.api_token}"
 
     def _body(self) -> dict[str, Any]:
         length = int(self.headers.get("content-length", "0"))
@@ -77,7 +86,8 @@ class ApiHandler(BaseHTTPRequestHandler):
 
 
 class AgentOSServer(ThreadingHTTPServer):
-    def __init__(self, address, runtime, gateway):
+    def __init__(self, address, runtime, gateway, api_token: str = ""):
         super().__init__(address, ApiHandler)
         self.runtime = runtime
         self.gateway = gateway
+        self.api_token = api_token

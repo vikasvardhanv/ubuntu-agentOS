@@ -46,6 +46,22 @@ streaming, tool calls, usage, errors, and cancellation into one contract.
 Credential material is referenced by opaque secret IDs. It is never placed in
 agent prompts, task records, or audit payloads.
 
+The implemented gateway follows the Hermes provider methodology without
+embedding Hermes itself:
+
+- callers select a canonical `provider:model` route
+- provider identity is separate from the wire transport
+- OpenAI-compatible and Anthropic Messages transports normalize to one response
+- ordered fallback routes are filtered by capability, locality, credentials,
+  data policy, and circuit health
+- retryable rate-limit, timeout, and server failures use bounded backoff
+- custom providers are declared in `/etc/agentos/providers.json`
+
+The current milestone intentionally rejects streaming rather than buffering or
+misrepresenting it. Streaming, Responses API, OAuth provider flows, secret
+service integration, and per-provider model catalogs remain required before a
+production release.
+
 ## Memory lifecycle
 
 Session memory expires with its configured retention. Durable memory requires a
