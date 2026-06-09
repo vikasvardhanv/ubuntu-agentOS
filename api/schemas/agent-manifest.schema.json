@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentos.dev/schemas/v1/agent-manifest.json",
+  "title": "AgentOS Agent Manifest",
+  "type": "object",
+  "required": ["schema_version", "name", "version", "capabilities", "publisher"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "name": {"type": "string", "pattern": "^[a-z][a-z0-9.-]+$"},
+    "version": {"type": "string"},
+    "publisher": {"type": "string"},
+    "description": {"type": "string"},
+    "capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "tools": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "signature": {"type": "string"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,32 @@
+[Unit]
+Description=AgentOS control plane and LLM gateway
+After=network.target
+
+[Service]
+Type=simple
+User=agentos
+Group=agentos
+EnvironmentFile=-/etc/agentos/agentos.env
+ExecStart=/usr/bin/python3 -m cmd.agentosd
+WorkingDirectory=/usr/lib/agentos
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadWritePaths=/var/lib/agentos
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

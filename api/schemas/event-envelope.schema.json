@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentos.dev/schemas/v1/event-envelope.json",
+  "title": "AgentOS Event Envelope",
+  "type": "object",
+  "required": ["schema_version", "event_id", "event_type", "occurred_at", "tenant_id", "actor_id", "data"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "event_id": {"type": "string", "format": "uuid"},
+    "event_type": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]+$"},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "tenant_id": {"type": "string"},
+    "actor_id": {"type": "string"},
+    "correlation_id": {"type": "string"},
+    "causation_id": {"type": "string"},
+    "classification": {"enum": ["public", "internal", "confidential", "restricted"]},
+    "data": {"type": "object"}
+  },
+  "additionalProperties": false
+}

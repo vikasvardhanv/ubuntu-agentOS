@@ -1,0 +1,13 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="dev.agentos.Privileged1">
+    <method name="Execute">
+      <arg name="action_id" type="s" direction="in"/>
+      <arg name="operation" type="s" direction="in"/>
+      <arg name="arguments_json" type="s" direction="in"/>
+      <arg name="approval_grant" type="s" direction="in"/>
+      <arg name="result_json" type="s" direction="out"/>
+    </method>
+  </interface>
+</node>
