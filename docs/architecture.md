@@ -2,7 +2,8 @@
 
 ## System position
 
-AgentOS is an Ubuntu 24.04 LTS derivative. It does not replace the Linux
+AgentOS is an Ubuntu LTS derivative. The current ARM64 development image uses
+Ubuntu 26.04; the architecture remains compatible with a 24.04 build. It does not replace the Linux
 kernel, drivers, systemd, NetworkManager, PipeWire, portals, or Ubuntu security
 updates. It adds a control plane and desktop experience that make goal-driven
 agent workflows the primary interaction model.

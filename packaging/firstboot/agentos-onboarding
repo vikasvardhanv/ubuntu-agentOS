@@ -1,0 +1,31 @@
+#!/bin/sh
+set -eu
+
+STATE_DIR="${AGENTOS_STATE_DIR:-/var/lib/agentos}"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/agentos"
+
+printf '\nAgentOS first-boot setup\n\n'
+printf 'Model route [ollama:qwen3]: '
+read -r route
+route="${route:-ollama:qwen3}"
+
+printf 'Memory mode (local/enterprise) [local]: '
+read -r memory
+memory="${memory:-local}"
+
+printf 'Approval policy (strict/balanced) [strict]: '
+read -r approval
+approval="${approval:-strict}"
+
+install -d -m 0700 "$CONFIG_DIR"
+umask 077
+cat > "$CONFIG_DIR/config.json" <<EOF
+{"default_route":"$route","memory_mode":"$memory","approval_policy":"$approval"}
+EOF
+
+printf '\nProvider API keys are intentionally not requested in this terminal.\n'
+printf 'Store them through the system secret service before enabling remote routes.\n'
+printf 'AgentOS setup complete. The runtime is available on the local gateway.\n'
+
+sudo touch "$STATE_DIR/onboarding-complete"
+sudo rm -f /etc/xdg/autostart/agentos-onboarding.desktop

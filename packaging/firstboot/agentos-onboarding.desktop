@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=AgentOS Setup
+Comment=Configure AgentOS providers, memory, and permissions
+Exec=gnome-terminal -- /usr/lib/agentos/scripts/agentos-onboarding
+OnlyShowIn=GNOME;Ubuntu;
+X-GNOME-Autostart-enabled=true

@@ -1,4 +1,4 @@
-.PHONY: run test check init-db
+.PHONY: run test check init-db package
 
 PYTHON ?= python3
 
@@ -14,3 +14,6 @@ check:
 
 init-db:
 	$(PYTHON) scripts/init_db.py
+
+package:
+	scripts/build_deb.sh

@@ -1,0 +1,18 @@
+[Unit]
+Description=Prepare AgentOS first-boot onboarding
+After=graphical.target
+ConditionPathExists=!/var/lib/agentos/onboarding-complete
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/lib/agentos/scripts/prepare-firstboot.sh
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/agentos /etc/xdg/autostart
+
+[Install]
+WantedBy=graphical.target

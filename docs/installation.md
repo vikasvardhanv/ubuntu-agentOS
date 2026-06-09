@@ -2,7 +2,7 @@
 
 ## Image construction
 
-AgentOS images are produced from signed Ubuntu 24.04 LTS packages using
+AgentOS images are produced from signed Ubuntu LTS packages using
 reproducible build manifests. AgentOS packages add services and a GNOME session
 without replacing the Ubuntu kernel. Secure Boot remains enabled. Updates use
 signed APT repositories, phased rollout, health checks, and rollback.
@@ -12,6 +12,10 @@ signed APT repositories, phased rollout, health checks, and rollback.
 The installer uses the Ubuntu installer stack and supports encryption, TPM
 enrollment, enterprise identity, recovery keys, and offline installation.
 Agent services remain disabled until first-boot configuration succeeds.
+
+The current ARM64 development ISO adds AgentOS as a final layered filesystem
+for both minimal and full Ubuntu desktop installation sources. This preserves
+the supplied Ubuntu base SquashFS and hybrid UEFI boot layout.
 
 ## First boot
 

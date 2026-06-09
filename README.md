@@ -1,6 +1,7 @@
 # AgentOS
 
-AgentOS is an agent-first operating experience built on Ubuntu 24.04 LTS. It
+AgentOS is an agent-first operating experience built on Ubuntu LTS. The current
+ARM64 development image is based on the supplied Ubuntu 26.04 desktop ISO. It
 keeps the Ubuntu kernel and hardware enablement stack unchanged and adds a
 policy-controlled agent control plane, system services, and desktop shell.
 
@@ -23,8 +24,13 @@ The first milestone includes:
 - Hardened systemd and D-Bus integration definitions
 - Architecture, security, desktop, installation, and roadmap specifications
 
-It is not yet an installable Ubuntu image. Image building, desktop shell,
-provider adapters, and privileged helper implementations are roadmap items.
+The development image is installable, but it is not yet a production release.
+Desktop shell, native provider adapters, privileged helper implementations,
+signing, and hardware qualification remain roadmap items.
+
+The repository now includes a reproducible remastering path that embeds the
+runtime into Ubuntu's layered installer. The generated development image is
+`dist/agentos-26.04-desktop-arm64.iso`.
 
 ## Quick start
 
@@ -35,6 +41,20 @@ make test
 make run
 curl http://127.0.0.1:7788/v1/health
 ```
+
+## Build the ARM64 image
+
+Requires `xorriso` and `squashfs-tools`, and expects the source image at
+`ubuntu-26.04-desktop-arm64.iso`.
+
+```bash
+make package
+scripts/remaster_iso.sh
+```
+
+The remaster preserves Ubuntu's boot metadata, adds AgentOS filesystem layers
+to both minimal and full installation choices, enables first-boot onboarding,
+and includes the standalone Debian package under `/agentos`.
 
 The server stores state under `./var` by default. Override settings with
 environment variables documented in [`config/agentos.env`](config/agentos.env).
