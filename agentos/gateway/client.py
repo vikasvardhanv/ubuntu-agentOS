@@ -15,7 +15,9 @@ from agentos.gateway.router import Route
 
 class Transport(ABC):
     @abstractmethod
-    def complete(self, route: Route, payload: dict[str, Any], timeout: float) -> dict[str, Any]:
+    def complete(
+        self, route: Route, payload: dict[str, Any], timeout: float, secret: str = ""
+    ) -> dict[str, Any]:
         ...
 
     @staticmethod
@@ -40,7 +42,9 @@ class Transport(ABC):
 
 
 class OpenAITransport(Transport):
-    def complete(self, route: Route, payload: dict[str, Any], timeout: float) -> dict:
+    def complete(
+        self, route: Route, payload: dict[str, Any], timeout: float, secret: str = ""
+    ) -> dict:
         body = _clean_payload(payload)
         body["model"] = route.model
         if route.provider.metadata.get("aggregator"):
@@ -56,7 +60,7 @@ class OpenAITransport(Transport):
         result = self.request(
             f"{route.provider.base_url.rstrip('/')}/chat/completions",
             body,
-            _headers(route, bearer=True),
+            _headers(route, bearer=True, secret=secret),
             timeout,
         )
         if not isinstance(result.get("choices"), list):
@@ -78,7 +82,9 @@ class AnthropicTransport(Transport):
         "refusal": "content_filter",
     }
 
-    def complete(self, route: Route, payload: dict[str, Any], timeout: float) -> dict:
+    def complete(
+        self, route: Route, payload: dict[str, Any], timeout: float, secret: str = ""
+    ) -> dict:
         system, messages = self._messages(payload.get("messages", []))
         body: dict[str, Any] = {
             "model": route.model,
@@ -99,7 +105,7 @@ class AnthropicTransport(Transport):
         raw = self.request(
             f"{route.provider.base_url.rstrip('/')}/messages",
             body,
-            _headers(route, bearer=False) | {"anthropic-version": "2023-06-01"},
+            _headers(route, bearer=False, secret=secret) | {"anthropic-version": "2023-06-01"},
             timeout,
         )
         return self._normalize(raw, route.model)
@@ -182,7 +188,8 @@ class AnthropicTransport(Transport):
 
 
 class GatewayClient:
-    def __init__(self) -> None:
+    def __init__(self, credential_resolver=None) -> None:
+        self.credential_resolver = credential_resolver
         self.transports: dict[str, Transport] = {
             "openai_chat": OpenAITransport(),
             "anthropic_messages": AnthropicTransport(),
@@ -194,7 +201,8 @@ class GatewayClient:
         transport = self.transports.get(route.provider.transport)
         if not transport:
             raise GatewayUpstreamError(f"unsupported transport: {route.provider.transport}")
-        result = transport.complete(route, payload, timeout)
+        secret = self.credential_resolver(route.provider) if self.credential_resolver else ""
+        result = transport.complete(route, payload, timeout, secret)
         result["agentos_route"] = {"provider": route.provider.id, "model": route.model}
         return result
 
@@ -207,10 +215,10 @@ def _clean_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in payload.items() if key in allowed}
 
 
-def _headers(route: Route, bearer: bool) -> dict[str, str]:
+def _headers(route: Route, bearer: bool, secret: str = "") -> dict[str, str]:
     headers = {"content-type": "application/json", "user-agent": "AgentOS/0.2"}
-    if route.provider.secret_env:
-        value = os.environ[route.provider.secret_env]
+    if secret or route.provider.secret_env:
+        value = secret or os.environ[route.provider.secret_env]
         headers["authorization" if bearer else "x-api-key"] = (
             f"Bearer {value}" if bearer else value
         )

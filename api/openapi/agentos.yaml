@@ -52,11 +52,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [model, messages]
+              required: [messages]
               properties:
                 model:
                   type: string
-                  examples: [ollama:qwen3, openrouter:anthropic/claude-sonnet-4]
+                  default: auto
+                  description: Use auto for the provider and model selected during onboarding.
                 messages:
                   type: array
                   items: {type: object}

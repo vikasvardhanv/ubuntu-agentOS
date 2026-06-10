@@ -7,7 +7,8 @@ from unittest.mock import Mock, patch
 
 from agentos.audit.log import AuditLog
 from agentos.domain.models import Actor
-from agentos.gateway.client import AnthropicTransport, GatewayClient, OpenAITransport
+from agentos.gateway.client import AnthropicTransport
+from agentos.gateway.discovery import discover_models
 from agentos.gateway.errors import FailureKind, GatewayUpstreamError, classify
 from agentos.gateway.health import CircuitBreaker
 from agentos.gateway.providers import ProviderRegistry
@@ -18,8 +19,8 @@ from agentos.policy.engine import PolicyEngine
 
 class RouterTests(unittest.TestCase):
     def test_local_only_skips_remote_fallback(self):
-        router = Router(("openrouter:remote", "ollama:qwen3"))
-        routes = router.candidates("ollama:llama3", RoutePolicy(local_only=True))
+        router = Router(("openrouter:remote", "ollama:local-backup"))
+        routes = router.candidates("ollama:local-primary", RoutePolicy(local_only=True))
         self.assertEqual(["ollama", "ollama"], [route.provider.id for route in routes])
 
     @patch.dict(os.environ, {"OPENROUTER_API_KEY": "secret"})
@@ -37,7 +38,16 @@ class RouterTests(unittest.TestCase):
         circuits = CircuitBreaker(threshold=1, cooldown=999)
         circuits.failure("ollama")
         with self.assertRaisesRegex(ValueError, "no provider"):
-            Router(circuits=circuits).candidates("ollama:qwen3", RoutePolicy())
+            Router(circuits=circuits).candidates("ollama:test-model", RoutePolicy())
+
+    def test_auto_resolves_user_selected_route(self):
+        registry = ProviderRegistry(selected_route="ollama:user-selected-model")
+        route = Router(registry=registry).candidates("auto", RoutePolicy())[0]
+        self.assertEqual("user-selected-model", route.model)
+
+    def test_auto_without_onboarding_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "complete AgentOS onboarding"):
+            Router().candidates("auto", RoutePolicy())
 
     def test_custom_remote_provider_requires_https(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -56,7 +66,7 @@ class GatewayTests(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 gateway.complete(
                     Actor("viewer", roles=("viewer",)),
-                    {"model": "ollama:qwen3", "messages": [{"role": "user", "content": "hi"}]},
+                    {"model": "ollama:test-model", "messages": [{"role": "user", "content": "hi"}]},
                 )
 
     def test_gateway_rejects_empty_messages(self):
@@ -67,7 +77,7 @@ class GatewayTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "non-empty"):
                 gateway.complete(
                     Actor("operator", roles=("operator",)),
-                    {"model": "ollama:qwen3", "messages": []},
+                    {"model": "ollama:test-model", "messages": []},
                 )
 
     def test_gateway_falls_back_after_retryable_failure(self):
@@ -90,6 +100,23 @@ class GatewayTests(unittest.TestCase):
             )
             self.assertEqual([], result["choices"])
             self.assertEqual(2, gateway.client.complete.call_count)
+
+    def test_gateway_defaults_to_onboarded_auto_route(self):
+        with tempfile.TemporaryDirectory() as directory:
+            registry = ProviderRegistry(selected_route="ollama:user-selected-model")
+            gateway = Gateway(
+                Router(registry=registry),
+                PolicyEngine(),
+                AuditLog(Path(directory) / "audit.jsonl"),
+                retries=0,
+            )
+            gateway.client.complete = Mock(return_value={"choices": [], "usage": {}})
+            gateway.complete(
+                Actor("operator", roles=("operator",)),
+                {"messages": [{"role": "user", "content": "hi"}]},
+            )
+            route = gateway.client.complete.call_args.args[0]
+            self.assertEqual("user-selected-model", route.model)
 
 
 class TransportTests(unittest.TestCase):
@@ -119,3 +146,13 @@ class TransportTests(unittest.TestCase):
         self.assertEqual(FailureKind.REQUEST, error.kind)
         self.assertFalse(error.retryable)
         self.assertFalse(error.fallback)
+
+    @patch("agentos.gateway.discovery.urllib.request.urlopen")
+    def test_model_discovery_uses_provider_catalog(self, urlopen):
+        response = Mock()
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        response.read.return_value = b'{"data":[{"id":"model-b"},{"id":"model-a"}]}'
+        urlopen.return_value = response
+        models = discover_models(ProviderRegistry().resolve("ollama"))
+        self.assertEqual(["model-a", "model-b"], models)

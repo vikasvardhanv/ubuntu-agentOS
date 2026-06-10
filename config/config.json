@@ -2,7 +2,7 @@
   "listen_host": "127.0.0.1",
   "listen_port": 7788,
   "gateway": {
-    "fallbacks": ["ollama:qwen3"],
+    "fallbacks": [],
     "retries": 2,
     "timeout_seconds": 120
   }

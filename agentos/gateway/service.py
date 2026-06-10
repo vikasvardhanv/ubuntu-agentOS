@@ -24,11 +24,13 @@ class Gateway:
         self.router = router
         self.policy = policy
         self.audit = audit
-        self.client = GatewayClient()
+        self.client = GatewayClient(router.registry.credential)
         self.retries = max(0, min(retries, 5))
         self.timeout = max(1, min(timeout, 600))
 
     def complete(self, actor: Actor, payload: dict[str, Any]) -> dict:
+        payload = dict(payload)
+        payload.setdefault("model", "auto")
         self._validate(payload)
         requested = str(payload["model"])
         request_id = str(uuid4())
@@ -106,12 +108,13 @@ class Gateway:
             "status": "ok",
             "providers": self.router.registry.list_public(),
             "circuits": self.router.circuits.status(),
+            "onboarding_required": not bool(self.router.registry.selected_route),
         }
 
     @staticmethod
     def _validate(payload: dict[str, Any]) -> None:
         if not isinstance(payload.get("model"), str) or not payload["model"].strip():
-            raise ValueError("model is required")
+            raise ValueError("model must be a non-empty string")
         messages = payload.get("messages")
         if not isinstance(messages, list) or not messages:
             raise ValueError("messages must be a non-empty list")

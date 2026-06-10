@@ -18,7 +18,10 @@ def main() -> None:
     tools = ToolRegistry()
     runtime = AgentRuntime(policy, audit, tools)
     gateway = Gateway(
-        Router(settings.fallbacks, ProviderRegistry.from_file(settings.providers_file)),
+        Router(
+            settings.fallbacks,
+            ProviderRegistry.from_file(settings.providers_file, settings.secrets_file),
+        ),
         policy,
         audit,
         retries=settings.gateway_retries,

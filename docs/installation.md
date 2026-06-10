@@ -21,11 +21,13 @@ the supplied Ubuntu base SquashFS and hybrid UEFI boot layout.
 
 1. Create or join a user identity and configure disk/recovery options.
 2. Select local-only, managed enterprise, or custom deployment mode.
-3. Configure model providers using secret references; Ollama/local is optional.
+3. Connect any supported or custom model provider. AgentOS tests the connection,
+   discovers available models, and asks the user to select one.
 4. Configure memory retention, encryption, indexing roots, and remote sync.
 5. Review baseline permissions and approval policy.
 6. Run diagnostics, create the initial signed configuration, and start runtime.
 7. Present a guided, approval-visible first goal.
 
 Interrupted onboarding resumes transactionally. Provider setup can be skipped;
-the desktop remains usable as standard Ubuntu.
+the desktop remains usable as standard Ubuntu, while agent requests fail closed
+until a provider is connected.

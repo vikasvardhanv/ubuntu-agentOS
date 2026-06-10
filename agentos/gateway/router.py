@@ -51,6 +51,10 @@ class Router:
         return routes
 
     def _parse(self, value: str) -> Route:
+        if value == "auto":
+            value = self.registry.selected_route
+            if not value:
+                raise ValueError("no LLM provider configured; complete AgentOS onboarding")
         if ":" not in value:
             raise ValueError("model route must use provider:model")
         provider_name, model = value.split(":", 1)
@@ -65,7 +69,7 @@ class Router:
             return False
         if not policy.require.issubset(provider.capabilities):
             return False
-        if provider.secret_env and not os.getenv(provider.secret_env):
+        if provider.secret_env and not self.registry.credential(provider):
             return False
         if not self.circuits.available(provider.id):
             return False

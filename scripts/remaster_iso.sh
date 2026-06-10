@@ -6,7 +6,7 @@ source_iso="${1:-$root/ubuntu-26.04-desktop-arm64.iso}"
 output_iso="${2:-$root/dist/agentos-26.04-desktop-arm64.iso}"
 tree="$root/build/iso-tree"
 overlay="$root/build/iso-overlay"
-version="${AGENTOS_VERSION:-0.2.0}"
+version="${AGENTOS_VERSION:-0.3.0}"
 package="$root/dist/agentos-runtime_${version}_all.deb"
 
 [ -f "$source_iso" ] || { echo "source ISO not found: $source_iso" >&2; exit 1; }

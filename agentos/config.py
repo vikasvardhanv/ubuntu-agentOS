@@ -10,6 +10,7 @@ from pathlib import Path
 class Settings:
     state_dir: Path
     providers_file: Path
+    secrets_file: Path
     host: str
     port: int
     api_token: str
@@ -31,6 +32,7 @@ class Settings:
             providers_file=Path(
                 os.getenv("AGENTOS_PROVIDERS_FILE", "/etc/agentos/providers.json")
             ),
+            secrets_file=Path(os.getenv("AGENTOS_SECRETS_FILE", "/etc/agentos/secrets.json")),
             host=os.getenv("AGENTOS_LISTEN_HOST", str(raw.get("listen_host", "127.0.0.1"))),
             port=int(os.getenv("AGENTOS_LISTEN_PORT", str(raw.get("listen_port", 7788)))),
             api_token=os.getenv("AGENTOS_API_TOKEN", str(raw.get("api_token", ""))),

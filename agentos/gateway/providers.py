@@ -17,6 +17,7 @@ class Provider:
     local: bool = False
     capabilities: frozenset[str] = frozenset({"chat", "tools"})
     metadata: dict[str, Any] = field(default_factory=dict)
+    secret: str = field(default="", repr=False, compare=False)
 
 
 BUILTIN_PROVIDERS: dict[str, Provider] = {
@@ -42,27 +43,43 @@ ALIASES = {"xai": "grok", "google": "gemini", "local": "ollama"}
 
 
 class ProviderRegistry:
-    def __init__(self, providers: dict[str, Provider] | None = None):
+    def __init__(
+        self,
+        providers: dict[str, Provider] | None = None,
+        selected_route: str = "",
+        configured_ids: set[str] | None = None,
+    ):
         self._providers = dict(providers or BUILTIN_PROVIDERS)
+        self.selected_route = selected_route
+        self.configured_ids = configured_ids or set()
 
     @classmethod
-    def from_file(cls, path: Path) -> ProviderRegistry:
+    def from_file(cls, path: Path, secrets_path: Path | None = None) -> ProviderRegistry:
         registry = cls()
         if not path.exists():
             return registry
         raw = json.loads(path.read_text(encoding="utf-8"))
+        secrets = {}
+        if secrets_path and secrets_path.exists():
+            secrets = json.loads(secrets_path.read_text(encoding="utf-8")).get("providers", {})
+        registry.selected_route = str(raw.get("selected_route", "")).strip()
         for provider_id, entry in raw.get("providers", {}).items():
-            base_url = str(entry["base_url"]).rstrip("/")
+            builtin = BUILTIN_PROVIDERS.get(provider_id)
+            base_url = str(entry.get("base_url") or (builtin.base_url if builtin else "")).rstrip("/")
             cls._validate_url(base_url, bool(entry.get("local", False)))
             registry._providers[provider_id] = Provider(
                 id=provider_id,
                 base_url=base_url,
-                secret_env=str(entry.get("secret_env", "")),
-                transport=str(entry.get("transport", "openai_chat")),
-                local=bool(entry.get("local", False)),
-                capabilities=frozenset(entry.get("capabilities", ("chat", "tools"))),
+                secret_env=str(entry.get("secret_env") or (builtin.secret_env if builtin else "")),
+                transport=str(entry.get("transport") or (builtin.transport if builtin else "openai_chat")),
+                local=bool(entry.get("local", builtin.local if builtin else False)),
+                capabilities=frozenset(
+                    entry.get("capabilities", builtin.capabilities if builtin else ("chat", "tools"))
+                ),
                 metadata=dict(entry.get("metadata", {})),
+                secret=str(secrets.get(provider_id, "")),
             )
+            registry.configured_ids.add(provider_id)
         return registry
 
     def resolve(self, name: str) -> Provider:
@@ -83,10 +100,14 @@ class ProviderRegistry:
                 "transport": item.transport,
                 "local": item.local,
                 "capabilities": sorted(item.capabilities),
-                "configured": not bool(item.secret_env) or bool(os.getenv(item.secret_env)),
+                "configured": item.id in self.configured_ids or bool(os.getenv(item.secret_env)),
+                "selected": self.selected_route.startswith(f"{item.id}:"),
             }
             for item in self._providers.values()
         ]
+
+    def credential(self, provider: Provider) -> str:
+        return provider.secret or (os.getenv(provider.secret_env, "") if provider.secret_env else "")
 
     @staticmethod
     def _validate_url(base_url: str, local: bool) -> None:

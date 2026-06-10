@@ -2,7 +2,7 @@
 set -eu
 
 root="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
-version="${AGENTOS_VERSION:-0.2.0}"
+version="${AGENTOS_VERSION:-0.3.0}"
 stage="$root/build/deb/agentos-runtime"
 out="$root/dist"
 

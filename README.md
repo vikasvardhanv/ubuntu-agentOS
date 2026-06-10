@@ -61,6 +61,8 @@ The server stores state under `./var` by default. Override settings with
 environment variables documented in [`config/agentos.env`](config/agentos.env).
 Gateway defaults live in [`config/config.json`](config/config.json), and custom
 provider profiles use [`config/providers.json`](config/providers.json).
+The shipped image contains no default provider or model. First boot connects,
+tests, and discovers models from the provider selected by the user.
 
 ## Design principles
 

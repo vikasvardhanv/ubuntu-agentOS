@@ -57,6 +57,11 @@ embedding Hermes itself:
 - retryable rate-limit, timeout, and server failures use bounded backoff
 - custom providers are declared in `/etc/agentos/providers.json`
 
+No provider or model is selected in the shipped image. First-boot onboarding
+discovers models from the user's chosen endpoint and persists a selected route.
+Agents normally request `model: "auto"`; the gateway resolves it to that
+user-selected route. If onboarding is incomplete, inference fails closed.
+
 The current milestone intentionally rejects streaming rather than buffering or
 misrepresenting it. Streaming, Responses API, OAuth provider flows, secret
 service integration, and per-provider model catalogs remain required before a
