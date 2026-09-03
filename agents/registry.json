@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "agents": [
+    {
+      "name": "assistant-agent",
+      "description": "Main conversational agent — receives message threads, calls the LLM gateway, returns responses. Powers the desktop shell Chat panel.",
+      "version": "0.1.0",
+      "entry_point": "agents/assistant_agent.py",
+      "capabilities": ["llm_inference"],
+      "trust_level": "trusted"
+    },
+    {
+      "name": "shell-agent",
+      "description": "Executes shell commands on the host system after policy approval.",
+      "version": "0.1.0",
+      "entry_point": "agents/shell_agent.py",
+      "capabilities": ["run_command"],
+      "trust_level": "operator"
+    },
+    {
+      "name": "file-agent",
+      "description": "Reads, writes, and lists files and directories on the host filesystem.",
+      "version": "0.1.0",
+      "entry_point": "agents/file_agent.py",
+      "capabilities": ["file_operations"],
+      "trust_level": "user"
+    },
+    {
+      "name": "system-agent",
+      "description": "Returns system information (CPU, memory, disk) and can install packages with approval.",
+      "version": "0.1.0",
+      "entry_point": "agents/system_agent.py",
+      "capabilities": ["system_info"],
+      "trust_level": "operator"
+    }
+  ]
+}

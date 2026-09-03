@@ -1,0 +1,20 @@
+#!/bin/sh
+# Launches the consumer-friendly GTK first-boot wizard with permission to
+# write /etc/agentos. Falls back to the terminal wizard if no graphical
+# session or polkit agent is available.
+set -eu
+
+cd /usr/lib/agentos
+
+if [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v pkexec >/dev/null 2>&1; then
+    exec pkexec env \
+        DISPLAY="${DISPLAY:-}" \
+        WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}" \
+        XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}" \
+        XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}" \
+        PYTHONPATH=/usr/lib/agentos \
+        python3 -m agentos.onboarding_gui
+fi
+
+printf 'No graphical session detected — falling back to the terminal wizard.\n'
+exec /usr/lib/agentos/packaging/firstboot/agentos-onboarding

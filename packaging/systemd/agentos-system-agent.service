@@ -1,0 +1,17 @@
+[Unit]
+Description=AgentOS system-agent agent
+Documentation=https://agentos.dev/docs/agents
+After=agentos-runtime.service
+Requires=agentos-runtime.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/lib/agentos/agents/system_agent.py
+WorkingDirectory=/usr/lib/agentos
+Restart=on-failure
+RestartSec=5
+User=agentos
+EnvironmentFile=-/etc/agentos/agentos.env
+
+[Install]
+WantedBy=multi-user.target

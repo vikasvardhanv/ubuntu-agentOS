@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+import sys
+
 from agentos.api.server import AgentOSServer
 from agentos.audit.log import AuditLog
 from agentos.config import Settings
@@ -10,9 +13,20 @@ from agentos.policy.engine import PolicyEngine
 from agentos.runtime.service import AgentRuntime
 from agentos.tools.registry import ToolRegistry
 
+log = logging.getLogger("agentosd")
+
 
 def main() -> None:
-    settings = Settings.load()
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
+        stream=sys.stderr,
+    )
+    try:
+        settings = Settings.load()
+    except (OSError, ValueError) as exc:
+        log.error("failed to load configuration: %s", exc)
+        raise SystemExit(1)
     audit = AuditLog(settings.state_dir / "audit.jsonl")
     policy = PolicyEngine()
     tools = ToolRegistry()
@@ -27,6 +41,15 @@ def main() -> None:
         retries=settings.gateway_retries,
         timeout=settings.gateway_timeout,
     )
-    server = AgentOSServer((settings.host, settings.port), runtime, gateway, settings.api_token)
-    print(f"agentosd listening on http://{settings.host}:{settings.port}")
-    server.serve_forever()
+    try:
+        server = AgentOSServer((settings.host, settings.port), runtime, gateway, settings.api_token)
+    except OSError as exc:
+        log.error("failed to bind %s:%s: %s", settings.host, settings.port, exc)
+        raise SystemExit(1)
+    log.info("agentosd listening on http://%s:%s", settings.host, settings.port)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        log.info("interrupted, shutting down")
+    finally:
+        server.server_close()

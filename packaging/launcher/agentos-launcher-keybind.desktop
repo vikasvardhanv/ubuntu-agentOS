@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=AgentOS Launcher Shortcut Setup
+Comment=One-time registration of the Super+Space AgentOS launcher shortcut
+Exec=/usr/lib/agentos/packaging/launcher/setup-keybinding.sh
+NoDisplay=true
+OnlyShowIn=GNOME;Ubuntu;
+X-GNOME-Autostart-enabled=true

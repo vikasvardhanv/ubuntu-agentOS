@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS actions (
     updated_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS approvals (
+CREATE TABLE IF NOT EXISTS action_approvals (
     id TEXT PRIMARY KEY,
     action_id TEXT NOT NULL REFERENCES actions(id),
     approver_id TEXT NOT NULL,
@@ -46,6 +46,20 @@ CREATE TABLE IF NOT EXISTS approvals (
     scope JSON NOT NULL,
     expires_at TEXT NOT NULL,
     created_at TEXT NOT NULL
+);
+
+-- Human-in-the-loop approval requests from agents.
+CREATE TABLE IF NOT EXISTS approvals (
+    id TEXT PRIMARY KEY,
+    agent_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    resource TEXT,
+    context TEXT,               -- JSON
+    status TEXT NOT NULL DEFAULT 'pending',  -- pending/approved/denied
+    reason TEXT,
+    requested_at TEXT NOT NULL,
+    decided_at TEXT,
+    decided_by TEXT
 );
 
 CREATE TABLE IF NOT EXISTS memories (

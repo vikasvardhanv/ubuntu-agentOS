@@ -11,7 +11,7 @@ from agentos.gateway.providers import Provider
 
 def discover_models(provider: Provider, secret: str = "", timeout: float = 20) -> list[str]:
     """Discover model IDs from a configured provider without assuming a default."""
-    headers = {"accept": "application/json", "user-agent": "AgentOS-Onboarding/0.2"}
+    headers = {"accept": "application/json", "user-agent": "AgentOS-Onboarding/0.3"}
     if secret:
         if provider.transport == "anthropic_messages":
             headers |= {"x-api-key": secret, "anthropic-version": "2023-06-01"}

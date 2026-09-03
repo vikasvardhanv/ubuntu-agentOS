@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import threading
 from pathlib import Path
+from typing import Any
 
 from agentos.domain.models import AuditEvent
 
@@ -40,5 +42,52 @@ class AuditLog:
             with self.path.open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(record, sort_keys=True) + "\n")
                 stream.flush()
+                # fsync so the tamper-evident chain survives power loss.
+                os.fsync(stream.fileno())
             self._last_hash = record["hash"]
             return record
+
+    def query(
+        self,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+        actor_id: str = "",
+        event_type: str = "",
+        correlation_id: str = "",
+    ) -> list[dict[str, Any]]:
+        """Return filtered audit records in chronological order.
+
+        All filters are optional and combined with AND semantics.
+        Pagination uses offset (number of matching records to skip) and limit.
+        """
+        limit = max(1, min(limit, 1000))
+        offset = max(0, offset)
+        results: list[dict[str, Any]] = []
+        if not self.path.exists():
+            return results
+        with self._lock:
+            path_snapshot = self.path
+        skipped = 0
+        with path_snapshot.open(encoding="utf-8") as stream:
+            for line in stream:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record: dict[str, Any] = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if actor_id and record.get("actor_id") != actor_id:
+                    continue
+                if event_type and record.get("event_type") != event_type:
+                    continue
+                if correlation_id and record.get("correlation_id") != correlation_id:
+                    continue
+                if skipped < offset:
+                    skipped += 1
+                    continue
+                results.append(record)
+                if len(results) >= limit:
+                    break
+        return results

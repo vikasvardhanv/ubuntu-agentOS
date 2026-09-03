@@ -1,0 +1,16 @@
+[Unit]
+Description=AgentOS Desktop Shell
+Documentation=https://agentos.dev/docs/shell
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m agentos.shell.main
+WorkingDirectory=/usr/lib/agentos
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=-/etc/agentos/agentos.env
+
+[Install]
+WantedBy=graphical-session.target

@@ -216,7 +216,7 @@ def _clean_payload(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _headers(route: Route, bearer: bool, secret: str = "") -> dict[str, str]:
-    headers = {"content-type": "application/json", "user-agent": "AgentOS/0.2"}
+    headers = {"content-type": "application/json", "user-agent": "AgentOS/0.3"}
     if secret or route.provider.secret_env:
         value = secret or os.environ[route.provider.secret_env]
         headers["authorization" if bearer else "x-api-key"] = (

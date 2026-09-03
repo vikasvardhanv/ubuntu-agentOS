@@ -1,0 +1,17 @@
+[Unit]
+Description=Ollama local model server (bundled with AgentOS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ollama serve
+Environment=OLLAMA_HOST=127.0.0.1:11434
+Environment=OLLAMA_MODELS=/var/lib/ollama/models
+StateDirectory=ollama
+WorkingDirectory=/var/lib/ollama
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

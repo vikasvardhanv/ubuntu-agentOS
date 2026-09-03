@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 
 
-class FailureKind(StrEnum):
+class FailureKind(str, Enum):
     AUTH = "auth"
     BILLING = "billing"
     RATE_LIMIT = "rate_limit"

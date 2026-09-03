@@ -1,0 +1,20 @@
+[Unit]
+Description=AgentOS Privileged Helper
+Documentation=https://agentos.dev/docs/helper
+After=agentos-runtime.service
+Requires=agentos-runtime.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m agentos.helper.main
+WorkingDirectory=/usr/lib/agentos
+Restart=on-failure
+RestartSec=5
+User=root
+EnvironmentFile=-/etc/agentos/agentos.env
+# Socket dir is created by tmpfiles.d
+RuntimeDirectory=agentos
+RuntimeDirectoryMode=0775
+
+[Install]
+WantedBy=multi-user.target

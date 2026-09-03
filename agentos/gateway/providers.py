@@ -37,9 +37,36 @@ BUILTIN_PROVIDERS: dict[str, Provider] = {
     ),
     "ollama": Provider("ollama", "http://127.0.0.1:11434/v1", "", local=True),
     "vllm": Provider("vllm", "http://127.0.0.1:8000/v1", "", local=True),
+    "lmstudio": Provider("lmstudio", "http://127.0.0.1:1234/v1", "", local=True),
+    "deepseek": Provider("deepseek", "https://api.deepseek.com/v1", "DEEPSEEK_API_KEY"),
+    "mistral": Provider("mistral", "https://api.mistral.ai/v1", "MISTRAL_API_KEY"),
+    "groq": Provider("groq", "https://api.groq.com/openai/v1", "GROQ_API_KEY"),
+    "together": Provider(
+        "together",
+        "https://api.together.xyz/v1",
+        "TOGETHER_API_KEY",
+        metadata={"aggregator": True},
+    ),
+    "fireworks": Provider("fireworks", "https://api.fireworks.ai/inference/v1", "FIREWORKS_API_KEY"),
+    "cerebras": Provider("cerebras", "https://api.cerebras.ai/v1", "CEREBRAS_API_KEY"),
+    "moonshot": Provider("moonshot", "https://api.moonshot.ai/v1", "MOONSHOT_API_KEY"),
+    "zai": Provider("zai", "https://api.z.ai/api/paas/v4", "ZAI_API_KEY"),
+    "minimax": Provider(
+        "minimax", "https://api.minimax.io/anthropic", "MINIMAX_API_KEY", "anthropic_messages"
+    ),
+    "dashscope": Provider("dashscope", "https://dashscope.aliyuncs.com/compatible-mode/v1", "DASHSCOPE_API_KEY"),
+    "nous": Provider("nous", "https://inference-api.nousresearch.com/v1", "NOUS_API_KEY"),
 }
 
-ALIASES = {"xai": "grok", "google": "gemini", "local": "ollama"}
+ALIASES = {
+    "xai": "grok",
+    "google": "gemini",
+    "local": "ollama",
+    "qwen": "dashscope",
+    "alibaba": "dashscope",
+    "kimi": "moonshot",
+    "glm": "zai",
+}
 
 
 class ProviderRegistry:

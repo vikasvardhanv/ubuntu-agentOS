@@ -1,79 +1,104 @@
 # AgentOS
 
-AgentOS is an agent-first operating experience built on Ubuntu LTS. The current
-ARM64 development image is based on the supplied Ubuntu 26.04 desktop ISO. It
-keeps the Ubuntu kernel and hardware enablement stack unchanged and adds a
-policy-controlled agent control plane, system services, and desktop shell.
+**Your computer, run by agents you talk to.**
 
-This repository is the production architecture baseline and a runnable
-reference implementation of the AgentOS control plane. It is intentionally
-small enough to audit. The runtime defaults to local-only networking,
-deny-by-default authorization, approval-gated privileged actions, and
-append-only audit logging.
+AgentOS is a desktop operating system built on Ubuntu 26.04 LTS. Install it
+like any OS. On first boot, tell it your name and pick an AI agent — a fully
+offline local model (bundled, no account needed) or a cloud agent like Claude,
+ChatGPT, Gemini, and many more. After that, press `Super+Space` anywhere and
+just type what you want done: *"organize my downloads folder"*, *"write an
+email to my boss"*, *"install Spotify"* — agents do it.
 
-## Repository status
+All your regular Ubuntu apps still work. The agent layer is on top, not a
+replacement.
 
-The first milestone includes:
+---
 
-- Agent registration, lifecycle, task planning, and action dispatch
-- Policy decisions with RBAC and human approval gates
-- Tool registry with permission metadata
-- Vendor-neutral model routing policy
-- Hermes-inspired provider transports, fallback routing, retries, and circuits
-- SQLite schema for runtime, memory, approvals, and audit data
-- Versioned HTTP, event, and agent manifest contracts
-- Hardened systemd and D-Bus integration definitions
-- Architecture, security, desktop, installation, and roadmap specifications
+## Get AgentOS
 
-The development image is installable, but it is not yet a production release.
-Desktop shell, native provider adapters, privileged helper implementations,
-signing, and hardware qualification remain roadmap items.
+Download the latest ISO and its checksum file (`agentos-26.04-desktop-arm64.iso`
+and `.sha256`) from the project's releases.
 
-The repository now includes a reproducible remastering path that embeds the
-runtime into Ubuntu's layered installer. The generated development image is
-`dist/agentos-26.04-desktop-arm64.iso`.
-
-## Quick start
-
-Requires Python 3.11+ and has no third-party runtime dependencies.
+Verify the download before installing:
 
 ```bash
-make test
-make run
-curl http://127.0.0.1:7788/v1/health
+sha256sum -c agentos-26.04-desktop-arm64.iso.sha256
 ```
 
-## Build the ARM64 image
+### System requirements
 
-Requires `xorriso` and `squashfs-tools`, and expects the source image at
-`ubuntu-26.04-desktop-arm64.iso`.
+- 64-bit ARM (arm64) machine — current ISO targets Apple Silicon VMs and
+  arm64 desktops/laptops.
+- 8 GB RAM minimum (16 GB recommended if you'll run a local AI model).
+- 25 GB free disk space (local AI models add a few GB more).
+- Internet connection for cloud agents (optional — local AI works fully
+  offline).
+
+## Install
+
+1. Flash the ISO to a USB drive (e.g. with Rufus, Etcher, or `dd`), or boot it
+   directly in a VM.
+2. Boot from it and choose **Install AgentOS**. This is the standard Ubuntu
+   installer — same steps as installing regular Ubuntu (disk, language,
+   username, password).
+3. Reboot when prompted.
+
+## First boot
+
+A short setup wizard greets you — three steps, no terminal required:
+
+1. **What should we call you?** — your name, used to personalize the desktop.
+2. **Connect an agent** — "Local AI" is pre-selected and ready to go with zero
+   setup (the model runs entirely on your machine, fully offline). Or pick a
+   cloud agent — Claude, OpenAI, Gemini, Grok, OpenRouter, DeepSeek, Mistral,
+   Groq, and many more — and paste your API key. There's also an
+   **"Other / custom provider"** option for connecting any OpenAI-compatible
+   service by URL.
+3. **Pick a model** — choose the default model for your chosen agent.
+
+That's it — AgentOS is ready to use.
+
+## Using AgentOS
+
+- **Press `Super+Space`** anywhere to open the AgentOS chat bar. Type a
+  request in plain English and the relevant agent handles it — opening apps,
+  organizing files, drafting messages, installing software, and more.
+- **Everything stays visible.** Agents ask for approval before anything
+  risky (deleting files, installing packages, sending messages) and log every
+  action.
+- **Traditional desktop still works.** Files, Settings, browser, terminal —
+  all there, untouched.
+- **Switch or add agents anytime** from Settings → "Re-run onboarding wizard".
+
+## Troubleshooting
+
+- **Local AI seems slow on first use** — the wizard downloads a small model
+  (~2 GB) the first time you pick "Local AI". This only happens once.
+- **"No models found" for a cloud agent** — double-check the API key and that
+  your account has an active plan for that provider.
+- **Want to change agents later** — open Settings and choose "Re-run
+  onboarding wizard" to reconnect.
+- **Chat bar doesn't appear** — log out and back in once (registers the
+  `Super+Space` shortcut), or run `agentos-launcher --toggle` from a terminal.
+
+---
+
+## For developers
+
+AgentOS's control plane is a small, auditable Python 3.11+ codebase with no
+third-party runtime dependencies — agent registration, policy/RBAC, a
+vendor-neutral LLM gateway (20+ providers + custom endpoints), SQLite-backed
+runtime/audit storage, and a GTK4 + libadwaita desktop shell.
 
 ```bash
-make package
-scripts/remaster_iso.sh
+make test     # run the test suite
+make run      # start the daemon
+make package  # build the .deb
+scripts/remaster_iso.sh  # build the ISO (requires xorriso, squashfs-tools,
+                          # and ubuntu-26.04-desktop-arm64.iso in repo root)
 ```
 
-The remaster preserves Ubuntu's boot metadata, adds AgentOS filesystem layers
-to both minimal and full installation choices, enables first-boot onboarding,
-and includes the standalone Debian package under `/agentos`.
-
-The server stores state under `./var` by default. Override settings with
-environment variables documented in [`config/agentos.env`](config/agentos.env).
-Gateway defaults live in [`config/config.json`](config/config.json), and custom
-provider profiles use [`config/providers.json`](config/providers.json).
-The shipped image contains no default provider or model. First boot connects,
-tests, and discovers models from the provider selected by the user.
-
-## Design principles
-
-1. Agents never receive ambient root access.
-2. Every consequential request becomes an immutable action and audit event.
-3. Policy is evaluated before dispatch and again at privileged boundaries.
-4. Provider credentials stay in the gateway credential boundary.
-5. Local execution and storage are the default; remote services are explicit.
-6. APIs and events are versioned so independent services can evolve safely.
-
-## Documentation
+Design principles, architecture, and roadmap docs:
 
 - [Architecture](docs/architecture.md)
 - [Service design](docs/services.md)
@@ -82,6 +107,8 @@ tests, and discovers models from the provider selected by the user.
 - [Desktop experience](docs/desktop.md)
 - [Installation workflow](docs/installation.md)
 - [Roadmaps](docs/roadmap.md)
+
+Contributions welcome — open an issue or PR.
 
 ## License
 

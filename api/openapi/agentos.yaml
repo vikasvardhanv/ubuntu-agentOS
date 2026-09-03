@@ -5,22 +5,64 @@ info:
   description: Local control-plane API. Production deployments use Unix socket peer identity.
 servers:
   - url: http://127.0.0.1:7788
+
+# Authentication: Bearer token via Authorization header when AGENTOS_API_TOKEN is set.
+# /v1/health is always public. All other endpoints require authentication if a token is configured.
+# Actor identity is conveyed via X-AgentOS-Actor and X-AgentOS-Roles headers.
+
 paths:
   /v1/health:
     get:
       operationId: health
-      description: Gateway readiness, configured providers, and circuit state.
+      summary: Gateway health, provider status, and circuit state
       responses:
         "200":
-          description: Healthy
+          description: Always returns 200 with provider and circuit information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: {type: string, enum: [ok]}
+                  onboarding_required: {type: boolean}
+                  providers: {type: array, items: {type: object}}
+                  circuits: {type: object}
+
+  /v1/models:
+    get:
+      operationId: listModels
+      summary: List available models from the currently configured provider
+      responses:
+        "200":
+          description: OpenAI-compatible model list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: {type: string, enum: [list]}
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: {type: string}
+                        object: {type: string, enum: [model]}
+
   /v1/agents:
     get:
       operationId: listAgents
+      summary: List all registered agents
       responses:
         "200":
-          description: Registered agents
+          description: Array of agent objects
+        "401":
+          description: Unauthorized
+        "403":
+          description: Denied by policy
     post:
       operationId: registerAgent
+      summary: Register a new agent with a manifest
       requestBody:
         required: true
         content:
@@ -33,19 +75,133 @@ paths:
                 capabilities: {type: array, items: {type: string}}
       responses:
         "201":
-          description: Registered
+          description: Agent registered
+        "400":
+          description: Invalid manifest
         "403":
           description: Denied by policy
-  /v1/tools:
+
+  /v1/agents/{agent_id}:
+    parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema: {type: string}
     get:
-      operationId: listTools
+      operationId: getAgent
+      summary: Get details for a specific agent
       responses:
         "200":
-          description: Available capability manifests
+          description: Agent object
+        "403":
+          description: Denied by policy
+        "404":
+          description: Agent not found
+    delete:
+      operationId: unregisterAgent
+      summary: Unregister an agent
+      responses:
+        "200":
+          description: Agent unregistered
+        "403":
+          description: Denied by policy
+        "404":
+          description: Agent not found
+
+  /v1/agents/{agent_id}/tasks:
+    parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema: {type: string}
+    post:
+      operationId: submitTask
+      summary: Submit a task to an agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [capability]
+              properties:
+                capability: {type: string, description: "Tool or capability to invoke"}
+                arguments: {type: object, description: "Arguments passed to the capability handler"}
+      responses:
+        "201":
+          description: Task created (and synchronously completed in this milestone)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: {type: string}
+                  agent_id: {type: string}
+                  state: {type: string, enum: [pending, running, completed, failed]}
+                  result: {type: object}
+                  error: {type: string}
+                  created_at: {type: string}
+                  updated_at: {type: string}
+        "403":
+          description: Denied by policy
+        "404":
+          description: Agent not found
+
+  /v1/agents/{agent_id}/tasks/{task_id}:
+    parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema: {type: string}
+      - name: task_id
+        in: path
+        required: true
+        schema: {type: string}
+    get:
+      operationId: getTask
+      summary: Get task status and result
+      responses:
+        "200":
+          description: Task object
+        "403":
+          description: Denied by policy
+        "404":
+          description: Task not found
+    patch:
+      operationId: updateTask
+      summary: Report task execution state (used by agents)
+      description: |
+        Agents report progress by patching a task's state. Only pending or
+        running tasks may be updated; terminal states are immutable.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [state]
+              properties:
+                state: {type: string, enum: [running, completed, failed]}
+                result: {type: object}
+                error: {type: string}
+      responses:
+        "200":
+          description: Updated task object
+        "400":
+          description: Invalid state or task already terminal
+        "403":
+          description: Denied by policy
+        "404":
+          description: Agent or task not found
+
   /v1/chat/completions:
     post:
       operationId: createChatCompletion
-      description: OpenAI-compatible inference endpoint with provider:model routing.
+      summary: OpenAI-compatible inference endpoint with provider:model routing
+      description: |
+        Use model="auto" to route to the provider and model selected during onboarding.
+        Use model="provider:model" for explicit routing.
+        Supports fallback chains and circuit-breaking across providers.
       requestBody:
         required: true
         content:
@@ -57,28 +213,122 @@ paths:
                 model:
                   type: string
                   default: auto
-                  description: Use auto for the provider and model selected during onboarding.
                 messages:
                   type: array
                   items: {type: object}
                 tools:
                   type: array
                   items: {type: object}
+                temperature: {type: number}
+                max_tokens: {type: integer}
                 route_policy:
                   type: object
+                  description: Optional routing constraints
                   properties:
                     providers: {type: array, items: {type: string}}
                     require: {type: array, items: {type: string}}
                     local_only: {type: boolean}
-                    data_collection: {enum: [allow, deny]}
+                    data_collection: {type: string, enum: [allow, deny]}
                     upstream_only: {type: array, items: {type: string}}
                     upstream_ignore: {type: array, items: {type: string}}
-                    sort: {enum: [price, latency, throughput]}
+                    sort: {type: string, enum: [price, latency, throughput]}
                     require_parameters: {type: boolean}
       responses:
         "200":
-          description: Normalized completion
+          description: OpenAI-compatible completion object
         "403":
           description: Denied by policy
         "502":
           description: All eligible provider routes failed
+
+  /v1/policy/evaluate:
+    post:
+      operationId: evaluatePolicy
+      summary: Evaluate an RBAC/ABAC policy decision for a given capability and context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [capability]
+              properties:
+                capability:
+                  type: string
+                  description: "Dotted capability string e.g. 'agent.task.submit'"
+                resource:
+                  type: string
+                  description: "Resource identifier the action targets"
+                risk:
+                  type: string
+                  enum: [read, modify, external, privileged, prohibited]
+                  default: read
+                context:
+                  type: object
+                  description: "ABAC attribute context e.g. {agent: {trust_level: 'sandboxed'}}"
+      responses:
+        "200":
+          description: Policy decision
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    enum: [allow, deny, require_approval]
+                  reason: {type: string}
+                  constraints: {type: object}
+        "400":
+          description: Invalid request
+
+  /v1/audit:
+    get:
+      operationId: queryAudit
+      summary: Query the hash-chained audit log
+      parameters:
+        - name: limit
+          in: query
+          schema: {type: integer, default: 100, maximum: 1000}
+        - name: offset
+          in: query
+          schema: {type: integer, default: 0}
+        - name: actor_id
+          in: query
+          schema: {type: string}
+        - name: event_type
+          in: query
+          schema: {type: string}
+        - name: correlation_id
+          in: query
+          schema: {type: string}
+      responses:
+        "200":
+          description: Paginated list of audit records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: {type: string, enum: [list]}
+                  count: {type: integer}
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_id: {type: string}
+                        event_type: {type: string}
+                        actor_id: {type: string}
+                        occurred_at: {type: string}
+                        data: {type: object}
+                        previous_hash: {type: string}
+                        hash: {type: string}
+
+  /v1/tools:
+    get:
+      operationId: listTools
+      summary: List registered tool capability manifests
+      responses:
+        "200":
+          description: Array of tool manifests
