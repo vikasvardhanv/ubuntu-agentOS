@@ -3,7 +3,7 @@
 **The world's first AI-native operating system.** AgentOS isn't Ubuntu with an agent layer bolted on — it's a complete OS image where the agent runtime, model management, and onboarding wizard are baked into the ISO itself. Boot → Onboard → `Super+Space` works instantly.
 
 <p align="center">
-  <img src="https://github.com/vikashvardhan/AgentOS/raw/main/assets/hero-banner.png" alt="AgentOS Hero" width="800"/>
+  <img src="https://github.com/vikasvardhanv/ubuntu-agentOS/raw/main/assets/hero-banner.png" alt="AgentOS Hero" width="800"/>
 </p>
 
 ---
@@ -110,33 +110,33 @@
 
 ### Onboarding Wizard
 <p align="center">
-  <img src="https://github.com/vikashvardhan/AgentOS/raw/main/assets/screenshots/01-welcome.png" alt="Welcome Screen" width="600"/>
+  <img src="https://github.com/vikasvardhanv/ubuntu-agentOS/raw/main/assets/screenshots/01-welcome.png" alt="Welcome Screen" width="600"/>
   <br/><em>Step 1: Welcome & name entry</em>
 </p>
 
 <p align="center">
-  <img src="https://github.com/vikashvardhan/AgentOS/raw/main/assets/screenshots/02-provider.png" alt="Provider Selection" width="600"/>
+  <img src="https://github.com/vikasvardhanv/ubuntu-agentOS/raw/main/assets/screenshots/02-provider.png" alt="Provider Selection" width="600"/>
   <br/><em>Step 2: Local (Ollama) vs Cloud providers</em>
 </p>
 
 <p align="center">
-  <img src="https://github.com/vikashvardhan/AgentOS/raw/main/assets/screenshots/03-model.png" alt="Model Selection" width="600"/>
+  <img src="https://github.com/vikasvardhanv/ubuntu-agentOS/raw/main/assets/screenshots/03-model.png" alt="Model Selection" width="600"/>
   <br/><em>Step 3: Model picker with hardware-aware recommendations</em>
 </p>
 
 <p align="center">
-  <img src="https://github.com/vikashvardhan/AgentOS/raw/main/assets/screenshots/04-ready.png" alt="Ready" width="600"/>
+  <img src="https://github.com/vikasvardhanv/ubuntu-agentOS/raw/main/assets/screenshots/04-ready.png" alt="Ready" width="600"/>
   <br/><em>Step 4: Configuration complete — Super+Space active</em>
 </p>
 
 ### Runtime in Action
 <p align="center">
-  <img src="https://github.com/vikashvardhan/AgentOS/raw/main/assets/screenshots/05-hotkey.png" alt="Hotkey Overlay" width="600"/>
+  <img src="https://github.com/vikasvardhanv/ubuntu-agentOS/raw/main/assets/screenshots/05-hotkey.png" alt="Hotkey Overlay" width="600"/>
   <br/><em>Super+Space overlay — streaming response at 32.4 t/s</em>
 </p>
 
 <p align="center">
-  <img src="https://github.com/vikashvardhan/AgentOS/raw/main/assets/screenshots/06-model-switch.png" alt="Model Switch" width="600"/>
+  <img src="https://github.com/vikasvardhanv/ubuntu-agentOS/raw/main/assets/screenshots/06-model-switch.png" alt="Model Switch" width="600"/>
   <br/><em>Instant model switching via A/B slots</em>
 </p>
 
@@ -240,7 +240,7 @@ Decrypts at runtime via `agentos-runtime.service` → `age --decrypt -i /var/lib
 
 ### Build ISO Locally
 ```bash
-git clone https://github.com/vikashvardhan/AgentOS.git
+git clone https://github.com/vikasvardhanv/ubuntu-agentOS.git
 cd AgentOS
 
 # Requires: ubuntu-archive-keyring, debootstrap, xorriso, squashfs-tools
@@ -318,11 +318,11 @@ pytest src/modelmgr/tests/
 
 | Channel | Link |
 |---------|------|
-| **GitHub** | [github.com/vikashvardhan/AgentOS](https://github.com/vikashvardhan/AgentOS) |
+| **GitHub** | [github.com/vikashvardhan/AgentOS](https://github.com/vikasvardhanv/ubuntu-agentOS) |
 | **Discord** | [discord.gg/agentos](https://discord.gg/agentos) |
 | **Matrix** | `#agentos:matrix.org` |
 | **Docs** | [docs.agentos.ai](https://docs.agentos.ai) |
-| **Issues** | [GitHub Issues](https://github.com/vikashvardhan/AgentOS/issues) |
+| **Issues** | [GitHub Issues](https://github.com/vikasvardhanv/ubuntu-agentOS/issues) |
 | **Security** | security@agentos.ai |
 
 ---
@@ -353,7 +353,7 @@ Built with ❤️ by the **Project Nexus** team.
 - **Branding**: Nexus Agent avatar (identity/clone/nexus_presenter_ref.jpg)
 
 <p align="center">
-  <img src="https://github.com/vikashvardhan/AgentOS/raw/main/assets/logo-agentos.png" alt="AgentOS Logo" width="200"/>
+  <img src="https://github.com/vikasvardhanv/ubuntu-agentOS/raw/main/assets/logo-agentos.png" alt="AgentOS Logo" width="200"/>
 </p>
 
 <p align="center">
